@@ -20,7 +20,6 @@ from keras.models import Model
 from keras.regularizers import l2
 from keras.utils.vis_utils import plot_model as plot
 
-
 parser = argparse.ArgumentParser(description='Darknet To Keras Converter.')
 parser.add_argument('config_path', help='Path to Darknet cfg file.')
 parser.add_argument('weights_path', help='Path to Darknet weights file.')
@@ -31,13 +30,14 @@ parser.add_argument(
     help='Plot generated Keras model and save as image.',
     action='store_true')
 
+
 def unique_config_sections(config_file):
     """Convert all config sections to have unique names.
 
     Adds unique suffixes to config sections for compability with configparser.
     """
     section_counters = defaultdict(int)
-    output_stream = io.BytesIO() #io.StringIO()
+    output_stream = io.BytesIO()  # io.StringIO()
     with open(config_file) as fin:
         for line in fin:
             if line.startswith('['):
@@ -48,6 +48,7 @@ def unique_config_sections(config_file):
             output_stream.write(line)
     output_stream.seek(0)
     return output_stream
+
 
 # %%
 def _main(args):
@@ -67,8 +68,8 @@ def _main(args):
     print('Loading weights.')
     weights_file = open(weights_path, 'rb')
     major, minor, revision = np.ndarray(
-        shape=(3, ), dtype='int32', buffer=weights_file.read(12))
-    if (major*10+minor)>=2 and major<1000 and minor<1000:
+        shape=(3,), dtype='int32', buffer=weights_file.read(12))
+    if (major * 10 + minor) >= 2 and major < 1000 and minor < 1000:
         seen = np.ndarray(shape=(1,), dtype='int64', buffer=weights_file.read(8))
     else:
         seen = np.ndarray(shape=(1,), dtype='int32', buffer=weights_file.read(4))
@@ -110,10 +111,10 @@ def _main(args):
             weights_size = np.product(weights_shape)
 
             print('conv2d', 'bn'
-                  if batch_normalize else '  ', activation, weights_shape)
+            if batch_normalize else '  ', activation, weights_shape)
 
             conv_bias = np.ndarray(
-                shape=(filters, ),
+                shape=(filters,),
                 dtype='float32',
                 buffer=weights_file.read(filters * 4))
             count += filters
@@ -157,9 +158,9 @@ def _main(args):
                         activation, section))
 
             # Create Conv2D layer
-            if stride>1:
+            if stride > 1:
                 # Darknet uses left and top padding instead of 'same' mode
-                prev_layer = ZeroPadding2D(((1,0),(1,0)))(prev_layer)
+                prev_layer = ZeroPadding2D(((1, 0), (1, 0)))(prev_layer)
             conv_layer = (Conv2D(
                 filters, (size, size),
                 strides=(stride, stride),
@@ -208,7 +209,7 @@ def _main(args):
             prev_layer = all_layers[-1]
 
         elif section.startswith('yolo'):
-            out_index.append(len(all_layers)-1)
+            out_index.append(len(all_layers) - 1)
             all_layers.append(None)
             prev_layer = all_layers[-1]
 
