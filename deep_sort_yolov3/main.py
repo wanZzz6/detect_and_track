@@ -95,7 +95,8 @@ def main(yolo):
         # 特征提取
         features = encoder(frame, boxs)
         # score to 1.0 here).
-        detections = [Detection(bbox, 1.0, feature) for bbox, feature in zip(boxs, features)]
+        detections = [Detection(bbox, class_name, 1.0, feature) for bbox, class_name, feature in
+                      zip(boxs, class_names, features)]
 
         # Run non-maxima suppression.
         boxes = np.array([d.tlwh for d in detections])
@@ -128,11 +129,8 @@ def main(yolo):
             color = COLORS[indexIDs[i] % len(COLORS)].tolist()
             # 画目标跟踪框、id标注
             cv2.rectangle(frame, (int(bbox[0]), int(bbox[1])), (int(bbox[2]), int(bbox[3])), color, 3)
-            cv2.putText(frame, str(track.track_id), (int(bbox[0]), int(bbox[1] - 40)), 0, 0.75, color, 2)
-            # todo 类别名格式有误
-            if class_names:
-                class_name = class_names[0]
-                cv2.putText(frame, class_name, (int(bbox[0]), int(bbox[1] - 20)), 0, 0.75, color, 2)
+            cv2.putText(frame, track.class_name + str(track.track_id), (int(bbox[0]), int(bbox[1] - 40)), 0, 0.75,
+                        color, 2)
 
             i += 1
             # 画运动轨迹 draw motion path
@@ -184,10 +182,9 @@ def main(yolo):
     end = time.time()
 
     if len(pts[track.track_id]):
-        print(args["input"][43:57] + ": " + str(count) + " " + class_name + ' Found')
-        count_file.write(str("[VIDEO]: " + (args["input"][43:57])) + " " + str(class_name) + " " + (
+        print(args["input"] + ": " + str(count) + 'target Found')
+        count_file.write(str("[VIDEO]: " + args["input"]) + " " + (
             str(count)) + " " + "[MODEL]: yolo_cc_0612.h5" + " " + "[TIME]:" + (str('%.2f' % (end - start))))
-
     else:
         print("[No Found]")
 
