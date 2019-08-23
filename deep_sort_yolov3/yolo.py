@@ -130,6 +130,7 @@ class YOLO(object):
                print(predicted_class)
                continue
             '''
+# todo 筛选检测类别
             if predicted_class != args["class"]:  # and predicted_class != 'car':
                 # print(predicted_class)
                 continue
@@ -151,7 +152,6 @@ class YOLO(object):
                 h = h + y
                 y = 0
             return_boxs.append([x, y, w, h])
-            # print(return_boxs)
             return_class_name.append([predicted_class])
         # cv2.putText(image, str(self.class_names[c]),(int(box[0]), int(box[1] -50)),0, 5e-3 * 150, (0,255,0),2)
         # print("Found person: ",person_counter)
