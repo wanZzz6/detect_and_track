@@ -19,8 +19,9 @@ from yolo3.model import yolo_eval
 from yolo3.utils import letterbox_image
 import argparse
 
+url = 'rtmp://58.200.131.2:1935/livetv/hunantv'
 ap = argparse.ArgumentParser()
-ap.add_argument("-i", "--input", help="path to input video", default=0)
+ap.add_argument("-i", "--input", help="path to input video", default=url)
 ap.add_argument("-c", "--class", help="name of class", default="person")
 args = vars(ap.parse_args())
 
@@ -152,7 +153,7 @@ class YOLO(object):
                 h = h + y
                 y = 0
             return_boxs.append([x, y, w, h])
-            return_class_name.append([predicted_class])
+            return_class_name.append(predicted_class)
         # cv2.putText(image, str(self.class_names[c]),(int(box[0]), int(box[1] -50)),0, 5e-3 * 150, (0,255,0),2)
         # print("Found person: ",person_counter)
         return return_boxs, return_class_name
@@ -163,3 +164,31 @@ class YOLO(object):
 
 if __name__ == '__main__':
     yolo = YOLO()
+
+    video_capture = cv2.VideoCapture(args['input'])
+
+    while True:
+        ret, frame = video_capture.read()  # frame shape 640*480*3
+        if not ret:
+            print("Can't receive frame (stream end?). Exiting ...")
+            break
+
+        # image = Image.fromarray(frame)
+        image = Image.fromarray(frame[..., ::-1])  # bgr to rgb
+        # 检测
+        time2 = time.time()
+        boxs, class_names = yolo.detect_image(image)
+        print(boxs, class_names)
+        time3 = time.time()
+        print('detect cost is', time3 - time2)
+
+        for box, class_name in zip(boxs, class_names):
+            box = list(map(int, box))
+            cv2.rectangle(frame, (box[0], box[1]), (box[0] + box[2], box[1] + box[3]), (255, 255, 255), 3)
+            cv2.putText(frame, class_name, (box[0], box[1]), 0, 1.0, (0, 255, 0))
+
+        cv2.imshow("Image", frame)
+        if cv2.waitKey(1) & 0xFF == ord('q'):
+            break
+    video_capture.release()  # 释放摄像头
+    cv2.destroyAllWindows()  # 释放窗口资源
