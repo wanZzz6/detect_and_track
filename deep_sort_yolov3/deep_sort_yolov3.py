@@ -182,7 +182,7 @@ def main(yolo):
     end = time.time()
 
     if len(pts[track.track_id]):
-        print(args["input"] + ": " + str(count) + 'target Found')
+        print(str(args["input"]) + ": " + str(count) + 'target Found')
         count_file.write(str("[VIDEO]: " + args["input"]) + " " + (
             str(count)) + " " + "[MODEL]: yolo_cc_0612.h5" + " " + "[TIME]:" + (str('%.2f' % (end - start))))
     else:
