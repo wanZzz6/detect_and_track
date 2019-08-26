@@ -60,11 +60,12 @@ class Track:
     features : List[ndarray]
         A cache of features. On each measurement update, the associated feature
         vector is added to this list.
+    flag : It's just a flag
 
     """
 
     def __init__(self, mean, covariance, track_id, n_init, max_age, class_name='',
-                 feature=None):
+                 flag=False, feature=None):
         self.mean = mean
         self.covariance = covariance
         self.track_id = track_id
@@ -74,6 +75,7 @@ class Track:
 
         self.state = TrackState.Tentative
         self.class_name = class_name
+        self.flag = flag
         self.features = []
         if feature is not None:
             self.features.append(feature)

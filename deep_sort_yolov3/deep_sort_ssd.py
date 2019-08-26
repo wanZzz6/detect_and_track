@@ -3,18 +3,21 @@
 import os
 from timeit import time
 import warnings
-import imutils
-import cv2
-import numpy as np
 import argparse
-from PIL import Image
+from collections import deque
+
+import cv2
+import imutils
+import numpy as np
+from keras import backend
+
+from tools.face_detect import face_detect
+from tools.car_num_location import car_brand_detect
 from deep_sort import preprocessing
 from deep_sort import nn_matching
 from deep_sort.detection import Detection
 from deep_sort.tracker import Tracker
 from tools import generate_detections as gdet
-from collections import deque
-from keras import backend
 
 backend.clear_session()
 warnings.filterwarnings('ignore')
@@ -31,7 +34,7 @@ ap.add_argument("-p", "--prototxt", required=False,
 ap.add_argument("-m", "--model", required=False,
                 default='model_data/MobileNetSSD_deploy.caffemodel',
                 help="path to Caffe pre-trained model")
-ap.add_argument("-c", "--confidence", type=float, default=0.4,
+ap.add_argument("-c", "--confidence", type=float, default=0.25,
                 help="minimum probability to filter weak detections")
 
 args = vars(ap.parse_args())
@@ -56,10 +59,34 @@ COLORS = np.random.randint(0, 255, size=(200, 3),
                            dtype="uint8")
 
 
-def main():
-    global frame_index, out, list_file, count, class_name, track
+def handle_face_car(class_name, start_x, start_y, end_x, end_y):
+    """
+    :param class_name:
+    :param start_x:
+    :param start_y:
+    :param end_x:
+    :param end_y:
+    :return: Bollean. Is There a face or car?
+    """
+    if class_name == 'person':
+        return face_detect(frame[start_y: end_y, start_x: end_x])
+    elif class_name == 'car' or class_name == 'bus':
+        brand_region = car_brand_detect(frame[start_y: end_y, start_x: end_x])
+        # 用绿线画出车牌轮廓
+        for b_box in brand_region:
+            x, y, w, h = b_box
+            cv2.rectangle(frame, (x + start_x, y + start_y),
+                          (x + start_x + w, y + start_y + h))
+        # 保存车图片即可
+        return True
+    else:
+        print("Can't Handle! Unknown Class", class_name)
+        return True
 
-    time.sleep(2.0)
+
+def main():
+    global frame, frame_index, out, list_file, track, count
+
     start = time.time()
 
     # 参数定义
@@ -125,8 +152,6 @@ def main():
         #     0.6360997   0.8479532]
         #    [0.         15.          0.8989926   0.21603307  0.42735672
         #    0.58441484  0.8699994]]]]
-        time3 = time.time()
-        print('detect cost is', time3 - time2)
         boxs = []
         class_names = []
         for i in np.arange(0, detections.shape[2]):
@@ -135,14 +160,17 @@ def main():
             if confidence > args["confidence"]:
                 idx = int(detections[0, 0, i, 1])
                 class_name = CLASSES[idx]
-                class_names.append(class_name)
-                box = detections[0, 0, i, 3:7] * np.array([w, h, w, h])
-                # 转为整形坐标
-                (startX, startY, endX, endY) = box.astype("int")
-                startX = 0 if startX < 0 else startX
-                startY = 0 if startY < 0 else startY
 
-                boxs.append([startX, startY, endX - startX, endY - startY])
+                # 筛选类别
+                if class_name in NEED_CLASSES:
+                    class_names.append(class_name)
+                    box = detections[0, 0, i, 3:7] * np.array([w, h, w, h])
+                    # 转为整形坐标
+                    (startX, startY, endX, endY) = box.astype("int")
+                    startX = 0 if startX < 0 else startX
+                    startY = 0 if startY < 0 else startY
+
+                    boxs.append([startX, startY, endX - startX, endY - startY])
 
         print(boxs, class_names)
         time3 = time.time()
@@ -182,9 +210,14 @@ def main():
             indexIDs.append(track.track_id)
             counter.append(track.track_id)
             bbox = track.to_tlbr()
+            start_x, start_y, end_x, end_y = bbox.astype('int')
             color = COLORS[indexIDs[i] % len(COLORS)].tolist()
+
+            print(track.flag)
+            if not track.flag:
+                track.flag = handle_face_car(track.class_name, start_x, start_y, end_x, end_y)
             # 画目标跟踪框、id标注
-            cv2.rectangle(frame, (int(bbox[0]), int(bbox[1])), (int(bbox[2]), int(bbox[3])), color, 3)
+            cv2.rectangle(frame, (start_x, start_y, end_x, end_y), color, 3)
             cv2.putText(frame, track.class_name + str(track.track_id), (int(bbox[0]), int(bbox[1] - 40)), 0, 0.75,
                         color, 2)
 
@@ -200,7 +233,9 @@ def main():
                     continue
                 thickness = int(np.sqrt(64 / (j + 1.0)) * 2)
                 cv2.line(frame, (pts[track.track_id][j - 1]), (pts[track.track_id][j]), color, thickness)
-                # cv2.putText(frame, str(class_names[j]),(int(bbox[0]), int(bbox[1] -20)),0, 5e-3 * 150, (255,255,255),2)
+
+        time6 = time.time()
+        print('handle tracker cost:', time6 - time5)
 
         # 画目标检测白框
         for det in detections:
@@ -211,12 +246,12 @@ def main():
         cv2.putText(frame, "Total Object Counter: " + str(count), (20, 120), 0, 0.75, (0, 255, 0), 2)
         cv2.putText(frame, "Current Object Counter: " + str(i), (20, 80), 0, 0.75, (0, 255, 0), 2)
         cv2.putText(frame, "FPS: %f" % fps, (20, 40), 0, 1.0, (0, 255, 0), 2)
-        time6 = time.time()
-        print('Draw Rectangle and Text cost:', time6 - time5)
+        # time7 = time.time()
+        # print('Draw Rectangle and Text cost:', time7 - time6)
 
-        cv2.namedWindow("YOLO3_Deep_SORT", 0)
-        cv2.resizeWindow('YOLO3_Deep_SORT', 1024, 768)
-        cv2.imshow('YOLO3_Deep_SORT', frame)
+        cv2.namedWindow("SSD_Deep_SORT", 0)
+        cv2.resizeWindow('SSD_Deep_SORT', 1024, 768)
+        cv2.imshow('SSD_Deep_SORT', frame)
 
         if write_video_flag:
             # save a frame
@@ -240,7 +275,7 @@ def main():
     if len(pts[track.track_id]):
         print(str(args["input"]) + ": " + str(count) + 'target Found')
         count_file.write(str("[VIDEO]: " + args["input"]) + " " + (
-            str(count)) + " " + "[MODEL]: yolo_cc_0612.h5" + " " + "[TIME]:" + (str('%.2f' % (end - start))))
+            str(count)) + " " + "[MODEL]: MobileNetSSD" + " " + "[TIME]:" + (str('%.2f' % (end - start))))
     else:
         print("[No Found]")
 
