@@ -10,7 +10,10 @@ face_num = len(os.listdir(os.path.join('..', 'data', 'face')))
 print(face_num)
 
 # 加载人脸特征库
-face_cascade_name = os.path.join('..', 'model_data', 'haarcascade_frontalface_default.xml')
+if __name__ == '__main__':
+    face_cascade_name = os.path.join('..', 'model_data', 'haarcascade_frontalface_default.xml')
+else:
+    face_cascade_name = os.path.join('model_data', 'haarcascade_frontalface_default.xml')
 face_cascade = cv2.CascadeClassifier()
 if not face_cascade.load(cv2.samples.findFile(face_cascade_name)):
     print('--(!)Error loading face cascade')
@@ -35,7 +38,8 @@ def face_detect(img, save=True, show=False):
         # 用矩形圈出人脸
         if show:
             cv2.rectangle(img, (x, y), (x + w, y + h), (0, 255, 0), 2)
-    cv2.imshow('face', img)
+    if show and len(rects) > 0:
+        cv2.imshow('face', img)
     return len(rects) > 0
 
 
@@ -46,9 +50,10 @@ def face_detect(img, save=True, show=False):
 
 if __name__ == '__main__':
 
+    url = 'rtmp://58.200.131.2:1935/livetv/hunantv'
     camera_device = 0
     # -- 2. Read the video stream
-    cap = cv2.VideoCapture(camera_device)
+    cap = cv2.VideoCapture(url)
     if not cap.isOpened:
         print('--(!)Error opening video capture')
         exit(0)
