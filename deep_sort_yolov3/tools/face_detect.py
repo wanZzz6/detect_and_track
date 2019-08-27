@@ -32,15 +32,18 @@ def face_detect(img, save=True, show=False):
         exit(0)
     rects = face_cascade.detectMultiScale(gray, scaleFactor=1.3, minNeighbors=5, minSize=(30, 30),
                                           flags=cv2.CASCADE_SCALE_IMAGE)
+    if len(rects) == 0:
+        return False
+    cv2.imwrite(os.path.join(face_save_path, str(face_num) + '.jpg'), img)
     for (x, y, w, h) in rects:
         print('Face Location:', x, y, x + w, y + h)
-        # 保存人脸
+        # 调整尺寸，将人脸周围更多区域保存下来
         if save:
             x = x - 20 if x - 20 > 0 else 0
             y = y - 20 if y - 20 > 0 else 0
             w += 40
             h += 40
-            cv2.imwrite(os.path.join(face_save_path, str(face_num) + '.jpg'), img[y:y + h, x:x + w, :])
+            cv2.imwrite(os.path.join(face_save_path, str(face_num) + '-face.jpg'), img[y:y + h, x:x + w, :])
             face_num += 1
             print('Save Face', face_num)
         # 用矩形圈出人脸
