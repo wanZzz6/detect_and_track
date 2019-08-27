@@ -37,6 +37,10 @@ def face_detect(img, save=True, show=False):
         print('Face Location:', x, y, x + w, y + h)
         # 保存人脸
         if save:
+            x = x - 20 if x - 20 > 0 else 0
+            y = y - 20 if y - 20 > 0 else 0
+            w += 40
+            h += 40
             cv2.imwrite(os.path.join(face_save_path, str(face_num) + '.jpg'), img[y:y + h, x:x + w, :])
             face_num += 1
             print('Save Face', face_num)

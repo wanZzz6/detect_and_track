@@ -213,7 +213,6 @@ def main():
             start_x, start_y, end_x, end_y = bbox.astype('int')
             color = COLORS[indexIDs[i] % len(COLORS)].tolist()
 
-            print(track.flag)
             if not track.flag:
                 track.flag = handle_face_car(track.class_name, start_x, start_y, end_x, end_y)
             # 画目标跟踪框、id标注
