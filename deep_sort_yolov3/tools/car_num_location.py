@@ -4,12 +4,11 @@ import os
 import cv2
 import numpy as np
 
-
-face_save_path = os.path.join('data', 'car')
+face_save_path = os.path.join('..', 'data', 'car')
 if not os.path.exists(face_save_path):
     os.makedirs(face_save_path)
 # 汽车计数
-car_num = len(os.listdir(os.path.join('data', 'car')))
+car_num = len(os.listdir(os.path.join('..', 'data', 'car')))
 
 
 def preprocess(gray):
@@ -81,7 +80,7 @@ def car_brand_detect(img):
         return []
 
     # 保存整车图片
-    cv2.imwrite(os.path.join('data', 'car', str(car_num)+'.jpg'), img)
+    cv2.imwrite(os.path.join('..', 'data', 'car', str(car_num) + '.jpg'), img)
     car_num += 1
     # 转化成灰度图
     gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
@@ -95,3 +94,15 @@ def car_brand_detect(img):
     return region
 
 
+if __name__ == '__main__':
+    imagePath = os.path.join('..', 'data', 'car_pic', '1.jpg')
+    img = cv2.imread(imagePath)
+    region = car_brand_detect(img)
+    print(region)
+    for box in region:
+        cv2.rectangle(img, (box[0], box[1]), (box[0] + box[2], box[1] + box[3]), (0, 255, 0), 2)
+
+    cv2.namedWindow('img', cv2.WINDOW_NORMAL)
+    cv2.imshow('img', img)
+    cv2.waitKey(0)
+    cv2.destroyAllWindows()
