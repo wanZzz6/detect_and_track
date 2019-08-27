@@ -23,11 +23,11 @@ backend.clear_session()
 warnings.filterwarnings('ignore')
 
 url = 'rtmp://58.200.131.2:1935/livetv/hunantv'
-video = os.path.join('video', 'chaplin.mp4')
+video = os.path.join('video', 'project_video.mp4')
 
 # construct the argument parse and parse the arguments
 ap = argparse.ArgumentParser()
-ap.add_argument("-i", "--input", help="path to input video", default=0)
+ap.add_argument("-i", "--input", help="path to input video", default=url)
 ap.add_argument("-p", "--prototxt", required=False,
                 default='model_data/MobileNetSSD_deploy.prototxt.txt',
                 help="path to Caffe 'deploy' prototxt file")
@@ -76,7 +76,7 @@ def handle_face_car(class_name, start_x, start_y, end_x, end_y):
         for b_box in brand_region:
             x, y, w, h = b_box
             cv2.rectangle(frame, (x + start_x, y + start_y),
-                          (x + start_x + w, y + start_y + h))
+                          (x + start_x + w, y + start_y + h), (0, 255, 0), 2)
         # 保存车图片即可
         return True
     else:
@@ -134,8 +134,7 @@ def main():
             break
         time1 = time.time()
 
-        # image = Image.fromarray(frame)
-        frame = imutils.resize(frame, width=800)
+        # frame = imutils.resize(frame, width=800)
         (h, w) = frame.shape[:2]
         blob = cv2.dnn.blobFromImage(cv2.resize(frame, (300, 300)),
                                      0.007843, (300, 300), 127.5)
@@ -237,9 +236,9 @@ def main():
         print('handle tracker cost:', time6 - time5)
 
         # 画目标检测白框
-        for det in detections:
-            bbox = det.to_tlbr()
-            cv2.rectangle(frame, (int(bbox[0]), int(bbox[1])), (int(bbox[2]), int(bbox[3])), (255, 255, 255), 2)
+        # for det in detections:
+        #     bbox = det.to_tlbr()
+        #     cv2.rectangle(frame, (int(bbox[0]), int(bbox[1])), (int(bbox[2]), int(bbox[3])), (255, 255, 255), 2)
 
         count = len(set(counter))
         cv2.putText(frame, "Total Object Counter: " + str(count), (20, 120), 0, 0.75, (0, 255, 0), 2)
@@ -271,12 +270,12 @@ def main():
     print("[Finish]")
     end = time.time()
 
-    if len(pts[track.track_id]):
-        print(str(args["input"]) + ": " + str(count) + 'target Found')
-        count_file.write(str("[VIDEO]: " + args["input"]) + " " + (
-            str(count)) + " " + "[MODEL]: MobileNetSSD" + " " + "[TIME]:" + (str('%.2f' % (end - start))))
-    else:
-        print("[No Found]")
+    # if len(pts[track.track_id]):
+    #     print(str(args["input"]) + ": " + str(count) + 'target Found')
+    #     count_file.write(str("[VIDEO]: " + args["input"]) + " " + (
+    #         str(count)) + " " + "[MODEL]: MobileNetSSD" + " " + "[TIME]:" + (str('%.2f' % (end - start))))
+    # else:
+    #     print("[No Found]")
 
     video_capture.release()
     count_file.write('\n')
