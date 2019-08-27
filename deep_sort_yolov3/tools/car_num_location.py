@@ -4,11 +4,13 @@ import os
 import cv2
 import numpy as np
 
-face_save_path = os.path.join('..', 'data', 'car')
-if not os.path.exists(face_save_path):
-    os.makedirs(face_save_path)
+BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+car_save_path = os.path.join(BASE_DIR, 'data', 'car')
+if not os.path.exists(car_save_path):
+    os.makedirs(car_save_path)
+
 # 汽车计数
-car_num = len(os.listdir(os.path.join('..', 'data', 'car')))
+car_num = len(os.listdir(car_save_path))
 
 
 def preprocess(gray):
@@ -81,7 +83,7 @@ def car_brand_detect(img, save=True):
 
     # 保存整车图片
     if save:
-        cv2.imwrite(os.path.join('..', 'data', 'car', str(car_num) + '.jpg'), img)
+        cv2.imwrite(os.path.join(car_save_path, str(car_num) + '.jpg'), img)
         car_num += 1
         print('Save Car', car_num)
     # 转化成灰度图

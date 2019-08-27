@@ -8,7 +8,6 @@ if not os.path.exists(face_save_path):
 
 # 人脸计数
 face_num = len(os.listdir(face_save_path))
-print(face_num)
 
 # 加载人脸特征库
 if __name__ == '__main__':
