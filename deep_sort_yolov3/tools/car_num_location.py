@@ -73,15 +73,17 @@ def findPlateNumberRegion(img):
     return region
 
 
-def car_brand_detect(img):
+def car_brand_detect(img, save=True):
     global car_num
     if img is None:
         print('Input Error!! 请输入正确路径')
         return []
 
     # 保存整车图片
-    cv2.imwrite(os.path.join('..', 'data', 'car', str(car_num) + '.jpg'), img)
-    car_num += 1
+    if save:
+        cv2.imwrite(os.path.join('..', 'data', 'car', str(car_num) + '.jpg'), img)
+        car_num += 1
+        print('Save Car', car_num)
     # 转化成灰度图
     gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
 
@@ -97,7 +99,7 @@ def car_brand_detect(img):
 if __name__ == '__main__':
     imagePath = os.path.join('..', 'data', 'car_pic', '1.jpg')
     img = cv2.imread(imagePath)
-    region = car_brand_detect(img)
+    region = car_brand_detect(img, False)
     print(region)
     for box in region:
         cv2.rectangle(img, (box[0], box[1]), (box[0] + box[2], box[1] + box[3]), (0, 255, 0), 2)
