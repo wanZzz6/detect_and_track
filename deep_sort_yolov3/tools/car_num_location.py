@@ -51,7 +51,7 @@ def findPlateNumberRegion(img):
         area = cv2.contourArea(cnt)
 
         # 面积小的都筛选掉
-        if area < 900:
+        if area < 500:
             continue
 
         # 找到最小的矩形，该矩形可能有方向
@@ -87,7 +87,10 @@ def car_brand_detect(img, save=True):
         car_num += 1
         print('Save Car', car_num)
     # 转化成灰度图
-    gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
+    try:
+        gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
+    except:
+        return []
 
     # 形态学变换的预处理
     dilation = preprocess(gray)

@@ -28,8 +28,8 @@ def face_detect(img, save=True, show=False):
     try:
         gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
     except:
-        cv2.imwrite('aa.jpg', img)
-        exit(0)
+        print('灰度转换失败')
+        return False
     rects = face_cascade.detectMultiScale(gray, scaleFactor=1.3, minNeighbors=5, minSize=(30, 30),
                                           flags=cv2.CASCADE_SCALE_IMAGE)
     if len(rects) == 0:
