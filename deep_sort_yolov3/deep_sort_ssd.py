@@ -46,7 +46,7 @@ CLASSES = ["background", "aeroplane", "bicycle", "bird", "boat",
            "dog", "horse", "motorbike", "person", "pottedplant", "sheep",
            "sofa", "train", "tvmonitor"]
 
-NEED_CLASSES = {'car', 'person'}
+NEED_CLASSES = {'car', 'bus', 'motorbike', 'person'}
 # NEED_CLASSES = set(CLASSES)
 
 # 记录运动轨迹坐标
@@ -59,29 +59,29 @@ COLORS = np.random.randint(0, 255, size=(200, 3),
                            dtype="uint8")
 
 
-def handle_face_car(class_name, start_x, start_y, end_x, end_y):
+def handle_face_car(class_name, start_x, start_y, end_x, end_y, flag=False):
     """
     :param class_name:
     :param start_x:
     :param start_y:
     :param end_x:
     :param end_y:
+    :param flag: save pic ?
     :return: Bollean. Is There a face or car?
     """
     if class_name == 'person':
         return face_detect(frame[start_y: end_y, start_x: end_x])
-    elif class_name == 'car' or class_name == 'bus':
-        brand_region = car_brand_detect(frame[start_y: end_y, start_x: end_x])
+    elif class_name in ['car', 'bus']:
+        brand_region = car_brand_detect(frame[start_y: end_y, start_x: end_x], flag)
         # 用绿线画出车牌轮廓
         for b_box in brand_region:
             x, y, w, h = b_box
             cv2.rectangle(frame, (x + start_x, y + start_y),
                           (x + start_x + w, y + start_y + h), (0, 255, 0), 2)
-        # 保存车图片即可
-        return True
     else:
-        print("Can't Handle! Unknown Class", class_name)
-        return True
+        car_brand_detect(frame[start_y: end_y, start_x: end_x], True)
+    # 保存车图片即可
+    return True
 
 
 def main():
@@ -118,9 +118,10 @@ def main():
         # Define the codec and create VideoWriter object
         w = int(video_capture.get(3))
         h = int(video_capture.get(4))
+        # DIVX, XVID, MJPG, X264, WMV1, WMV2.(XVID is more preferable.MJPG results in high size ideo.X264 gives ery small size video)
         fourcc = cv2.VideoWriter_fourcc(*'XVID')
-        out = cv2.VideoWriter(os.path.join('video', 'output.avi'), fourcc, 15,
-                              (w, h))
+        out = cv2.VideoWriter(os.path.join('video', str(args['input'].split('.')[0][-7:]) + '_out.avi'),
+                              fourcc, 20, (w, h))
         list_file = open('detection.txt', 'w')
         frame_index = -1
     # 帧率计数
@@ -212,10 +213,12 @@ def main():
             start_x, start_y, end_x, end_y = bbox.astype('int')
             color = COLORS[indexIDs[i] % len(COLORS)].tolist()
 
-            if not track.flag:
-                track.flag = handle_face_car(track.class_name, start_x, start_y, end_x, end_y)
+            if not track.flag and track.class_name == 'person':
+                track.flag = handle_face_car('person', start_x, start_y, end_x, end_y)
+            else:
+                track.flag = handle_face_car(track.class_name, start_x, start_y, end_x, end_y, not track.flag)
             # 画目标跟踪框、id标注
-            cv2.rectangle(frame, (start_x, start_y, end_x, end_y), color, 3)
+            cv2.rectangle(frame, (start_x, start_y), (end_x, end_y), color, 3)
             cv2.putText(frame, track.class_name + str(track.track_id), (int(bbox[0]), int(bbox[1] - 40)), 0, 0.75,
                         color, 2)
 
